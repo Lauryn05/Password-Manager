@@ -60,14 +60,27 @@ class Keychain {
     * Return Type: Keychain
     */
   static async load(password, repr, trustedDataCheck) {
-    const [dataString, checksum] = JSON.parse(repr);
+    const [encryptedDataString, checksum] = JSON.parse(repr);
     if (trustedDataCheck && trustedDataCheck !== checksum) {
       throw new Error("Integrity check failed");
     }
 
+    const encryptedData = stringToBuffer(encryptedDataString);
+    const iv = encryptedData.slice(0, 12);
+    const ciphertext = encryptedData.slice(12);
+
+    const key = await this.#deriveKey(password, iv);
+    const decryptedDataString = await subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      key,
+      ciphertext
+    );
+
+    const dataString = bufferToString(decryptedDataString);
     const data = JSON.parse(dataString);
-    const salt = stringToBuffer(data.salt);
-    const key = await this.#deriveKey(password, salt);
     return new Keychain(data, { key });
   }
 
@@ -85,8 +98,19 @@ class Keychain {
     */ 
   async dump() {
     const dataString = JSON.stringify(this.data);
+    const iv = getRandomBytes(12);
+    const encryptedData = await subtle.encrypt(
+      {
+        name: "AES-GCM",
+        iv,
+      },
+      this.secrets.key,
+      stringToBuffer(dataString)
+    );
+
+    const combinedData = Buffer.concat([iv, new Uint8Array(encryptedData)]);
     const checksum = crypto.createHash('sha256').update(dataString).digest('hex');
-    return JSON.stringify([dataString, checksum]);
+    return JSON.stringify([bufferToString(combinedData), checksum]);
   }
 
   /**
@@ -103,13 +127,15 @@ class Keychain {
       return null;
     }
     const encryptedData = stringToBuffer(this.data.entries[name]);
+    const iv = encryptedData.slice(0, 12);
+    const ciphertext = encryptedData.slice(12);
     const decryptedData = await subtle.decrypt(
       {
         name: "AES-GCM",
-        iv: encryptedData.slice(0, 12),
+        iv,
       },
       this.secrets.key,
-      encryptedData.slice(12)
+      ciphertext
     );
     return bufferToString(decryptedData);
   }
@@ -134,7 +160,8 @@ class Keychain {
       this.secrets.key,
       stringToBuffer(value)
     );
-    this.data.entries[name] = bufferToString(Buffer.concat([iv, new Uint8Array(encryptedData)]));
+    const combinedData = Buffer.concat([iv, new Uint8Array(encryptedData)]);
+    this.data.entries[name] = bufferToString(combinedData);
   }
 
   /**
