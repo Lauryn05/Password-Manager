@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Manager</title>
+</head>
+<body>
+    <h1>Welcome to the Password Manager</h1>
+    <form id="init-form">
+        <label for="password">Enter Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">Initialize</button>
+    </form>
+
+    <form id="load-form" style="display: none;">
+        <label for="password-load">Enter Password:</label>
+        <input type="password" id="password-load" name="password-load" required>
+        <button type="submit">Load</button>
+    </form>
+
+    <script>
+        document.getElementById('init-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const password = document.getElementById('password').value;
+            const response = await fetch('/init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await response.json();
+            console.log(data);
+            alert(data.message); // Alert the user about the status
+        };
+
+        document.getElementById('load-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const password = document.getElementById('password-load').value;
+            const response = await fetch('/load', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            const data = await response.json();
+            console.log(data);
+            alert(data.message); // Alert the user about the status
+        };
+    </script>
+</body>
+</html>
