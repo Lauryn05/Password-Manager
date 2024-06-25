@@ -28,29 +28,42 @@ class Keychain {
   }
 
   static async load(password, repr, trustedDataCheck) {
-    const [encryptedDataString, checksum] = JSON.parse(repr);
-    if (trustedDataCheck && trustedDataCheck !== checksum) {
-      throw new Error("Integrity check failed");
+    try {
+        console.log('Load called with password:', password);
+        console.log('Keychain representation:', repr);
+
+        const [encryptedDataString, checksum] = JSON.parse(repr);
+        console.log('Encrypted data:', encryptedDataString);
+        console.log('Checksum:', checksum);
+
+        if (trustedDataCheck && trustedDataCheck !== checksum) {
+            throw new Error("Integrity check failed");
+        }
+
+        const encryptedData = stringToBuffer(encryptedDataString);
+        const iv = encryptedData.slice(0, 12);
+        const ciphertext = encryptedData.slice(12);
+
+        const key = await this.#deriveKey(password, iv);
+        console.log('Derived key:', key);
+        console.log('IV:', iv);
+        const decryptedDataString = await subtle.decrypt(
+        {
+            name: "AES-GCM",
+            iv,
+        },
+        key,
+        ciphertext
+        );
+        console.log('Decrypted data:', decryptedDataString);
+        const dataString = bufferToString(decryptedDataString);
+        const data = JSON.parse(dataString);
+        return new Keychain(data, { key });
+    } catch (error) {
+        console.error('Error in Keychain.load:', error);
+        throw error;
     }
-
-    const encryptedData = stringToBuffer(encryptedDataString);
-    const iv = encryptedData.slice(0, 12);
-    const ciphertext = encryptedData.slice(12);
-
-    const key = await this.#deriveKey(password, iv);
-    const decryptedDataString = await subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv,
-      },
-      key,
-      ciphertext
-    );
-
-    const dataString = bufferToString(decryptedDataString);
-    const data = JSON.parse(dataString);
-    return new Keychain(data, { key });
-  }
+}
 
   async dump() {
     const dataString = JSON.stringify(this.data);

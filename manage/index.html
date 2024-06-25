@@ -7,19 +7,61 @@
 </head>
 <body>
     <h1>Welcome to the Password Manager</h1>
+
+    <!-- Initialization Form -->
     <form id="init-form">
-        <label for="password">Enter Password:</label>
+        <label for="password">Enter Master Password to Initialize:</label>
         <input type="password" id="password" name="password" required>
         <button type="submit">Initialize</button>
     </form>
 
+    <!-- Load Form (hidden initially) -->
     <form id="load-form" style="display: none;">
-        <label for="password-load">Enter Password:</label>
+        <label for="password-load">Enter Master Password to Load:</label>
         <input type="password" id="password-load" name="password-load" required>
         <button type="submit">Load</button>
     </form>
 
+    <!-- Set Form -->
+    <form id="set-form" style="display: none;">
+        <label for="name">Key Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="value">Value:</label>
+        <input type="text" id="value" name="value" required>
+        <button type="submit">Set</button>
+    </form>
+
+    <!-- Get Form -->
+    <form id="get-form" style="display: none;">
+        <label for="get-name">Enter Key Name to Get:</label>
+        <input type="text" id="get-name" name="get-name" required>
+        <button type="submit">Get</button>
+    </form>
+
+    <!-- Remove Form -->
+    <form id="remove-form" style="display: none;">
+        <label for="remove-name">Enter Key Name to Remove:</label>
+        <input type="text" id="remove-name" name="remove-name" required>
+        <button type="submit">Remove</button>
+    </form>
+
+    <!-- Dump Button -->
+    <button id="dump-button" style="display: none;">Dump Keychain</button>
+
     <script>
+        // Function to toggle forms visibility
+        function toggleForms(showFormId) {
+            const forms = ['init-form', 'load-form', 'set-form', 'get-form', 'remove-form'];
+            forms.forEach(formId => {
+                if (formId === showFormId) {
+                    document.getElementById(formId).style.display = 'block';
+                } else {
+                    document.getElementById(formId).style.display = 'none';
+                }
+            });
+        }
+
+        // Initialization Form Submission
         document.getElementById('init-form').onsubmit = async function(event) {
             event.preventDefault();
             const password = document.getElementById('password').value;
@@ -31,8 +73,13 @@
             const data = await response.json();
             console.log(data);
             alert(data.message); // Alert the user about the status
+            if (response.status === 200) {
+                toggleForms('set-form'); // Show set form after initialization
+                document.getElementById('dump-button').style.display = 'inline-block'; // Show dump button
+            }
         };
 
+        // Load Form Submission
         document.getElementById('load-form').onsubmit = async function(event) {
             event.preventDefault();
             const password = document.getElementById('password-load').value;
@@ -44,6 +91,71 @@
             const data = await response.json();
             console.log(data);
             alert(data.message); // Alert the user about the status
+            if (response.status === 200) {
+                toggleForms('set-form'); // Show set form after loading
+                document.getElementById('dump-button').style.display = 'inline-block'; // Show dump button
+            }
+        };
+
+        // Set Form Submission
+        document.getElementById('set-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const value = document.getElementById('value').value;
+            const response = await fetch('/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, value })
+            });
+            const data = await response.json();
+            console.log(data);
+            alert(data.message);
+            if (response.status === 200) {
+                console.log('Entry set successfully');
+                // Hide set-form
+                document.getElementById('set-form').style.display = 'none';
+                // Show load-form
+                document.getElementById('load-form').style.display = 'block';
+            }
+            else {
+                console.log('Error setting entry');
+    }
+};
+
+        // Get Form Submission
+        document.getElementById('get-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('get-name').value;
+            const response = await fetch(`/get/${name}`);
+            const data = await response.json();
+            console.log(data);
+            if (response.status === 200) {
+                alert(`Value for ${name}: ${data.value}`);
+            } else {
+                alert(data.message);
+            }
+        };
+
+        // Remove Form Submission
+        document.getElementById('remove-form').onsubmit = async function(event) {
+            event.preventDefault();
+            const name = document.getElementById('remove-name').value;
+            const response = await fetch('/remove', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            });
+            const data = await response.json();
+            console.log(data);
+            alert(data.message);
+        };
+
+        // Dump Button Click
+        document.getElementById('dump-button').onclick = async function() {
+            const response = await fetch('/dump');
+            const data = await response.json();
+            console.log(data);
+            alert('Keychain dumped');
         };
     </script>
 </body>
