@@ -4,49 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Password Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>Welcome to the Password Manager</h1>
+<body class="bg-gray-100">
+    <header class="bg-blue-200 text-center py-4 mb-8">
+        <h1 class="text-3xl font-bold">Welcome to the Password Manager</h1>
+    </header>
 
     <!-- Initialization Form -->
-    <form id="init-form">
-        <label for="password">Enter Master Password to Initialize:</label>
-        <input type="password" id="password" name="password" required>
-        <button type="submit">Initialize</button>
+    <form id="init-form" class="max-w-md mx-auto p-4 bg-white rounded shadow-md space-y-4">
+        <label for="password" class="block font-medium">Enter Master Password to Initialize:</label>
+        <input type="password" id="password" name="password" class="w-full p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Initialize</button>
     </form>
 
     <!-- Load Form (hidden initially) -->
-    <form id="load-form" style="display: none;">
-        <label for="password-load">Enter Master Password to Load:</label>
-        <input type="password" id="password-load" name="password-load" required>
-        <button type="submit">Load</button>
+    <form id="load-form" class="max-w-md mx-auto p-4 bg-white rounded shadow-md space-y-4 mt-4" style="display: none;">
+        <label for="password-load" class="block font-medium">Enter Master Password to Load:</label>
+        <input type="password" id="password-load" name="password-load" class="w-full p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Load</button>
     </form>
 
     <!-- Set Form -->
-    <form id="set-form" style="display: none;">
-        <label for="name">Key Name:</label>
-        <input type="text" id="name" name="name" required>
-        <label for="value">Value:</label>
-        <input type="text" id="value" name="value" required>
-        <button type="submit">Set</button>
+    <form id="set-form" class="max-w-md mx-auto p-4 bg-white rounded shadow-md space-y-4 mt-4" style="display: none;">
+        <label for="name" class="block font-medium">Key Name:</label>
+        <input type="text" id="name" name="name" class="w-full p-2 border border-gray-300 rounded" required>
+        <label for="value" class="block font-medium">Value:</label>
+        <input type="text" id="value" name="value" class="w-full p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Set</button>
     </form>
 
     <!-- Get Form -->
-    <form id="get-form" style="display: none;">
-        <label for="get-name">Enter Key Name to Get:</label>
-        <input type="text" id="get-name" name="get-name" required>
-        <button type="submit">Get</button>
+    <form id="get-form" class="max-w-md mx-auto p-4 bg-white rounded shadow-md space-y-4 mt-4" style="display: none;">
+        <label for="get-name" class="block font-medium">Enter Key Name to Get:</label>
+        <input type="text" id="get-name" name="get-name" class="w-full p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">Get</button>
     </form>
 
     <!-- Remove Form -->
-    <form id="remove-form" style="display: none;">
-        <label for="remove-name">Enter Key Name to Remove:</label>
-        <input type="text" id="remove-name" name="remove-name" required>
-        <button type="submit">Remove</button>
+    <form id="remove-form" class="max-w-md mx-auto p-4 bg-white rounded shadow-md space-y-4 mt-4" style="display: none;">
+        <label for="remove-name" class="block font-medium">Enter Key Name to Remove:</label>
+        <input type="text" id="remove-name" name="remove-name" class="w-full p-2 border border-gray-300 rounded" required>
+        <button type="submit" class="w-full bg-red-500 text-white py-2 rounded">Remove</button>
     </form>
 
     <!-- Dump Button -->
-    <button id="dump-button" style="display: none;">Dump Keychain</button>
+    <button id="dump-button" class="max-w-md mx-auto mt-4 bg-blue-500 text-white py-2 rounded block" style="display: none;">Dump Keychain</button>
 
     <script>
         // Function to toggle forms visibility
@@ -116,11 +119,10 @@
                 document.getElementById('set-form').style.display = 'none';
                 // Show load-form
                 document.getElementById('load-form').style.display = 'block';
-            }
-            else {
+            } else {
                 console.log('Error setting entry');
-    }
-};
+            }
+        };
 
         // Get Form Submission
         document.getElementById('get-form').onsubmit = async function(event) {

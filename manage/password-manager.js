@@ -2,14 +2,13 @@
 
 /********* External Imports ********/
 
-const { stringToBuffer, bufferToString, encodeBuffer, decodeBuffer, getRandomBytes } = require("./lib");
+const { stringToBuffer, bufferToString, getRandomBytes } = require("./lib");
 const { subtle } = require('crypto').webcrypto;
 const crypto = require('crypto');
 
 /********* Constants ********/
 
 const PBKDF2_ITERATIONS = 100000; // number of iterations for PBKDF2 algorithm
-const MAX_PASSWORD_LENGTH = 64;   // we can assume no password is longer than this many characters
 
 /********* Implementation ********/
 class Keychain {
@@ -29,41 +28,46 @@ class Keychain {
 
   static async load(password, repr, trustedDataCheck) {
     try {
-        console.log('Load called with password:', password);
-        console.log('Keychain representation:', repr);
-
-        const [encryptedDataString, checksum] = JSON.parse(repr);
-        console.log('Encrypted data:', encryptedDataString);
-        console.log('Checksum:', checksum);
-
-        if (trustedDataCheck && trustedDataCheck !== checksum) {
-            throw new Error("Integrity check failed");
-        }
-
-        const encryptedData = stringToBuffer(encryptedDataString);
-        const iv = encryptedData.slice(0, 12);
-        const ciphertext = encryptedData.slice(12);
-
-        const key = await this.#deriveKey(password, iv);
-        console.log('Derived key:', key);
-        console.log('IV:', iv);
-        const decryptedDataString = await subtle.decrypt(
+      console.log('Load called with password:', password);
+      console.log('Keychain representation:', repr);
+  
+      const [encryptedDataString, checksum] = JSON.parse(repr);
+      console.log('Encrypted data:', encryptedDataString);
+      console.log('Checksum:', checksum);
+  
+      if (trustedDataCheck && trustedDataCheck !== checksum) {
+        throw new Error("Integrity check failed");
+      }
+  
+      const encryptedData = stringToBuffer(encryptedDataString);
+      const iv = encryptedData.slice(0, 12);
+      const ciphertext = encryptedData.slice(12);
+  
+      console.log('IV:', iv);
+  
+      const key = await this.#deriveKey(password, iv);
+      console.log('Derived key:', key);
+  
+      const decryptedData = await subtle.decrypt(
         {
-            name: "AES-GCM",
-            iv,
+          name: "AES-GCM",
+          iv,
         },
         key,
         ciphertext
-        );
-        console.log('Decrypted data:', decryptedDataString);
-        const dataString = bufferToString(decryptedDataString);
-        const data = JSON.parse(dataString);
-        return new Keychain(data, { key });
+      );
+  
+      const dataString = bufferToString(decryptedData);
+      const data = JSON.parse(dataString);
+  
+      console.log('Decrypted data:', data);
+  
+      return new Keychain(data, { key });
     } catch (error) {
-        console.error('Error in Keychain.load:', error);
-        throw error;
+      console.error('Error in Keychain.load:', error);
+      throw error;
     }
-}
+  }  
 
   async dump() {
     const dataString = JSON.stringify(this.data);
@@ -77,7 +81,8 @@ class Keychain {
       stringToBuffer(dataString)
     );
 
-    const combinedData = Buffer.concat([iv, new Uint8Array(encryptedData)]);
+    const encryptedBytes = new Uint8Array(encryptedData);
+    const combinedData = Buffer.concat([iv, encryptedBytes]);
     const checksum = crypto.createHash('sha256').update(dataString).digest('hex');
     return JSON.stringify([bufferToString(combinedData), checksum]);
   }
